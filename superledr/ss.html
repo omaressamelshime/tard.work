@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام الفواتير</title>
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: right;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #333;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 120px;
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 18px;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .invoice-preview {
+            margin-top: 25px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            text-align: right;
+        }
+
+        .invoice-preview h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .invoice-preview p {
+            margin: 8px 0;
+            color: #555;
+            font-size: 18px;
+        }
+
+        .invoice-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .invoice-preview table th,
+        .invoice-preview table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .invoice-preview table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .qr-code {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #777;
+            text-align: center;
+        }
+
+        .delete-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+
+        .delete-button:hover {
+            background-color: #cc0000;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .invoice-preview, .invoice-preview * {
+                visibility: visible;
+            }
+            .invoice-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 10px;
+                font-size: 14px;
+            }
+            .invoice-preview h2 {
+                font-size: 18px;
+            }
+            .invoice-preview p {
+                font-size: 12px;
+            }
+            .invoice-preview table th,
+            .invoice-preview table td {
+                padding: 8px;
+                font-size: 12px;
+            }
+            .footer-note {
+                font-size: 10px;
+            }
+            .qr-code {
+                margin-top: 10px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h1>نظام إنشاء الفواتير</h1>
+    <img src="logo.jpg" alt="لوجو الشركة" class="logo" id="logo">
+
+    <div class="input-group">
+        <label for="companyName">اسم الشركة:</label>
+        <input type="text" id="companyName" placeholder="أدخل اسم الشركة">
+    </div>
+
+    <div class="input-group">
+        <label for="customerName">اسم العميل:</label>
+        <input type="text" id="customerName" placeholder="أدخل اسم العميل">
+    </div>
+
+    <div class="input-group">
+        <label for="contactNumber">رقم التواصل مع الإدارة:</label>
+        <input type="text" id="contactNumber" placeholder="أدخل رقم التواصل">
+    </div>
+
+    <div class="input-group">
+        <label for="items">إضافة منتجات:</label>
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>اسم المنتج</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>الإجمالي</th>
+                    <th>حذف</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" class="product-name" placeholder="اسم المنتج"></td>
+                    <td><input type="number" class="product-quantity" placeholder="الكمية" min="1"></td>
+                    <td><input type="number" class="product-price" placeholder="السعر" min="0"></td>
+                    <td><span class="product-total">0</span></td>
+                    <td><button class="delete-button" onclick="deleteProductRow(this)">حذف</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="button" onclick="addProductRow()">إضافة منتج جديد</button>
+    </div>
+
+    <div class="input-group">
+        <label>
+            <input type="checkbox" id="addWarning"> إضافة تحذير بعدم إمكانية استرجاع المنتج بعد 14 يومًا
+        </label>
+    </div>
+
+    <button class="button" onclick="generateInvoice()">إنشاء الفاتورة</button>
+    <button class="button" onclick="clearInvoice()" style="background-color: #ff4d4d;">حذف الفاتورة</button>
+    <button class="button" onclick="printInvoice()">طباعة الفاتورة</button>
+    <button class="button" onclick="downloadPDF()" style="background-color: #007bff;">تنزيل الفاتورة كPDF</button>
+
+    <div class="invoice-preview" id="invoicePreview">
+        <h2 id="invoiceTitle">معاينة الفاتورة</h2>
+        <p id="previewCompanyName"></p>
+        <p id="previewCustomerName"></p>
+        <p id="previewDate"></p>
+        <table id="previewItemsTable">
+            <thead>
+                <tr>
+                    <th>اسم المنتج</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <p id="previewTotalAmount"></p>
+        <p id="previewContactNumber"></p>
+        <p id="previewWarning"></p>
+        <div class="qr-code" id="qrCode"></div>
+        <p class="footer-note">نشكرك على ثقتك بنا، نتمنى أن تعجبك منتجاتنا. شكرًا لك، <span id="previewCustomerNameFooter"></span>!</p>
+    </div>
+</div>
+
+<script>
+    // تحميل لوجو الشركة
+    const logo = document.getElementById('logo');
+    logo.src = 'logo.jpg'; // يمكنك تغيير المسار إلى لوجو شركتك
+
+    // إضافة منتج جديد
+    function addProductRow() {
+        const table = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+        newRow.innerHTML = `
+            <td><input type="text" class="product-name" placeholder="اسم المنتج"></td>
+            <td><input type="number" class="product-quantity" placeholder="الكمية" min="1"></td>
+            <td><input type="number" class="product-price" placeholder="السعر" min="0"></td>
+            <td><span class="product-total">0</span></td>
+            <td><button class="delete-button" onclick="deleteProductRow(this)">حذف</button></td>
+        `;
+        attachInputListeners(newRow);
+    }
+
+    // حذف منتج
+    function deleteProductRow(button) {
+        const row = button.closest('tr');
+        row.remove();
+    }
+
+    // إرفاق مستمعين لحساب الإجمالي
+    function attachInputListeners(row) {
+        const quantityInput = row.querySelector('.product-quantity');
+        const priceInput = row.querySelector('.product-price');
+        const totalCell = row.querySelector('.product-total');
+
+        function updateTotal() {
+            const quantity = parseInt(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            totalCell.innerText = (quantity * price).toFixed(2);
+        }
+
+        quantityInput.addEventListener('input', updateTotal);
+        priceInput.addEventListener('input', updateTotal);
+    }
+
+    // إنشاء الفاتورة
+    function generateInvoice() {
+        const companyName = document.getElementById('companyName').value;
+        const customerName = document.getElementById('customerName').value;
+        const contactNumber = document.getElementById('contactNumber').value;
+        const addWarning = document.getElementById('addWarning').checked;
+        const itemsTable = document.getElementById('itemsTable');
+        const rows = itemsTable.getElementsByTagName('tbody')[0].rows;
+
+        let totalAmount = 0;
+        const items = [];
+
+        for (let row of rows) {
+            const productName = row.querySelector('.product-name').value;
+            const quantity = row.querySelector('.product-quantity').value;
+            const price = row.querySelector('.product-price').value;
+            const total = row.querySelector('.product-total').innerText;
+
+            if (productName && quantity && price) {
+                items.push({ productName, quantity, price, total });
+                totalAmount += parseFloat(total);
+            }
+        }
+
+        document.getElementById('invoiceTitle').innerText = companyName;
+        document.getElementById('previewCompanyName').innerText = `اسم الشركة: ${companyName}`;
+        document.getElementById('previewCustomerName').innerText = `اسم العميل: ${customerName}`;
+        document.getElementById('previewCustomerNameFooter').innerText = customerName;
+        document.getElementById('previewDate').innerText = `تاريخ الفاتورة: ${new Date().toLocaleString()}`;
+        document.getElementById('previewContactNumber').innerText = `رقم التواصل مع الإدارة: ${contactNumber}`;
+
+        if (addWarning) {
+            const returnDate = new Date();
+            returnDate.setDate(returnDate.getDate() + 14);
+            document.getElementById('previewWarning').innerText = `تحذير: لا يمكن استرجاع المنتج بعد ${returnDate.toLocaleDateString()}`;
+        } else {
+            document.getElementById('previewWarning').innerText = '';
+        }
+
+        const previewTable = document.getElementById('previewItemsTable').getElementsByTagName('tbody')[0];
+        previewTable.innerHTML = '';
+        items.forEach(item => {
+            const newRow = previewTable.insertRow();
+            newRow.innerHTML = `
+                <td>${item.productName}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price}</td>
+                <td>${item.total}</td>
+            `;
+        });
+
+        document.getElementById('previewTotalAmount').innerText = `الإجمالي: ${totalAmount.toFixed(2)} جنيه`;
+
+        // إنشاء QR Code
+        const qrCodeElement = document.getElementById('qrCode');
+        qrCodeElement.innerHTML = '';
+        const qrCode = new QRCode(qrCodeElement, {
+            text: `فاتورة شركة: ${companyName}\nالعميل: ${customerName}\nالإجمالي: ${totalAmount.toFixed(2)} جنيه`,
+            width: 120,
+            height: 120,
+        });
+
+        // حفظ الفاتورة في localStorage
+        const invoiceData = {
+            companyName,
+            customerName,
+            contactNumber,
+            items,
+            totalAmount,
+            addWarning,
+            date: new Date().toLocaleString(),
+        };
+        localStorage.setItem('lastInvoice', JSON.stringify(invoiceData));
+    }
+
+    // حذف الفاتورة
+    function clearInvoice() {
+        document.getElementById('invoicePreview').innerHTML = `
+            <h2 id="invoiceTitle">معاينة الفاتورة</h2>
+            <p id="previewCompanyName"></p>
+            <p id="previewCustomerName"></p>
+            <p id="previewDate"></p>
+            <table id="previewItemsTable">
+                <thead>
+                    <tr>
+                        <th>اسم المنتج</th>
+                        <th>الكمية</th>
+                        <th>السعر</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <p id="previewTotalAmount"></p>
+            <p id="previewContactNumber"></p>
+            <p id="previewWarning"></p>
+            <div class="qr-code" id="qrCode"></div>
+            <p class="footer-note">نشكرك على ثقتك بنا، نتمنى أن تعجبك منتجاتنا. شكرًا لك، <span id="previewCustomerNameFooter"></span>!</p>
+        `;
+        localStorage.removeItem('lastInvoice');
+    }
+
+    // طباعة الفاتورة
+    function printInvoice() {
+        window.print();
+    }
+
+    // تنزيل الفاتورة كPDF
+    function downloadPDF() {
+        const invoiceElement = document.getElementById('invoicePreview');
+        html2canvas(invoiceElement).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 190; // عرض الصورة في الـ PDF
+            const imgHeight = (canvas.height * imgWidth) / canvas.width; // حساب الارتفاع بناءً على العرض
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            pdf.save('فاتورة.pdf');
+        });
+    }
+
+    // تحميل آخر فاتورة محفوظة
+    window.onload = () => {
+        const lastInvoice = localStorage.getItem('lastInvoice');
+        if (lastInvoice) {
+            const invoiceData = JSON.parse(lastInvoice);
+            document.getElementById('companyName').value = invoiceData.companyName;
+            document.getElementById('customerName').value = invoiceData.customerName;
+            document.getElementById('contactNumber').value = invoiceData.contactNumber;
+            document.getElementById('addWarning').checked = invoiceData.addWarning;
+            generateInvoice();
+        }
+    };
+
+    // إرفاق المستمعين للصف الأول
+    attachInputListeners(document.getElementById('itemsTable').getElementsByTagName('tbody')[0].rows[0]);
+</script>
+
+</body>
+</html>
